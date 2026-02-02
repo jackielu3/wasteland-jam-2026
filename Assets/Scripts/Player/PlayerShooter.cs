@@ -4,63 +4,66 @@ using UnityEngine;
 
 public class PlayerShooter : NetworkBehaviour
 {
-    [Header("Refs")]
-    [SerializeField] private NetworkObject bulletPrefab;
+    [SerializeField] private NetworkBehaviour soundWaveConePrefab;
 
-    [Header("Tuning")]
-    [SerializeField] private float bulletSpeed = 10f;
-    [SerializeField] private AudioClip shootClip;
-    [SerializeField] private float shootCooldown = 0.12f;
+    [SerializeField] private float aimSendInterval = 0.05f;
 
-    private float _nextShootTime;
+    private bool _holding;
+    private float _nextAimSend;
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (!IsOwner) enabled = false;
+    }
 
     private void Update()
     {
         if (!IsOwner) return;
 
-        if (Time.time < _nextShootTime) return;
-
         if (Input.GetMouseButtonDown(0))
         {
-            _nextShootTime = Time.time + shootCooldown;
+            _holding = true;
+            Vector2 aimDir = GetAimDirection();
+            StartSoundServerRpc(aimDir);
+            _nextAimSend = Time.time;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            _holding = false;
+            StopSoundServerRpc();
+        }
 
-            Vector3 shooterPos = transform.position;
-
-            Vector3 mouse = Input.mousePosition;
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(mouse);
-            mouseWorld.z = shooterPos.z;
-
-            Vector2 dir = (mouseWorld - shooterPos);
-            if (dir.sqrMagnitude < 0.0001f) return;
-            dir.Normalize();
-
-            FireServerRpc(shooterPos, dir);
+        if (_holding && Time.time > aimSendInterval)
+        {
+            _nextAimSend = Time.time + aimSendInterval;
+            UpdateAimServerRpc(GetAimDirection());
         }
     }
 
-    [ServerRpc(RequireOwnership = true)]
-    private void FireServerRpc(Vector3 spawnPos, Vector2 direction, Channel channel = Channel.Unreliable)
+    private Vector2 GetAimDirection()
     {
-        NetworkObject bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
-
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        if (bulletRb != null)
-            bulletRb.linearVelocity = direction * bulletSpeed;
-
-        // Direction
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        bullet.transform.rotation = Quaternion.Euler(0f, 0f, angle);
-
-        ServerManager.Spawn(bullet);
-
-        PlayShootSfxRpc(spawnPos);
+        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 dir = (mouseWorld - transform.position);
+        if (dir.sqrMagnitude < 0.0001f) return Vector2.right;
+        return dir.normalized;
     }
 
-    [ObserversRpc(BufferLast = false)]
-    private void PlayShootSfxRpc(Vector3 pos)
+    [ServerRpc]
+    private void StartSoundServerRpc(Vector2 aimDir)
     {
-        if (shootClip == null) return;
+        SoundWaveConeManager.Instance.ServerStartForPlayer(Owner, soundWaveConePrefab, transform, aimDir);
+    }
 
-        AudioSource.PlayClipAtPoint(shootClip, pos, 1f);
+    [ServerRpc]
+    private void StopSoundServerRpc()
+    {
+        SoundWaveConeManager.Instance.ServerStopForPlayer(Owner);
+    }
+
+    [ServerRpc]
+    private void UpdateAimServerRpc(Vector2 aimDir)
+    {
+        SoundWaveConeManager.Instance.ServerUpdateAimForPlayer(Owner, aimDir);
     }
 }
