@@ -841,14 +841,22 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7300622106754990064, guid: 81200243df5d80e4d8da3a93aeca537d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 617818243}
   m_SourcePrefab: {fileID: 100100000, guid: 81200243df5d80e4d8da3a93aeca537d, type: 3}
+--- !u!1 &617818239 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7300622106754990064, guid: 81200243df5d80e4d8da3a93aeca537d, type: 3}
+  m_PrefabInstance: {fileID: 617818238}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &617818241 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 40671649247580283, guid: 81200243df5d80e4d8da3a93aeca537d, type: 3}
   m_PrefabInstance: {fileID: 617818238}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 617818239}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2c95dfde7d73b54dbbdc23155d35d36, type: 3}
@@ -859,12 +867,31 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7020920018763977425, guid: 81200243df5d80e4d8da3a93aeca537d, type: 3}
   m_PrefabInstance: {fileID: 617818238}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 617818239}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1cdcee4396754c63a1574492499cffc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishyUnityTransport::FishNet.Transporting.UTP.UnityTransport
+--- !u!114 &617818243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617818239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d0962ead4b02a34aae248fccce671ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Managing.Debugging.DebugManager
+  WriteSceneObjectDetails: 1
+  ValidateRpcLengths: 0
+  DisableObserversRpcLinks: 0
+  DisableTargetRpcLinks: 0
+  DisableServerRpcLinks: 0
+  DisableReplicateRpcLinks: 0
+  DisableReconcileRpcLinks: 0
 --- !u!1 &674959689
 GameObject:
   m_ObjectHideFlags: 0
