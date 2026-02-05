@@ -1,13 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using FishNet.Managing;
-using TMPro;
+using FishNet.Transporting.UTP;
 using UnityEngine;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
-using FishNet.Transporting.UTP;
 
 public class RelayConnectionManager : MonoBehaviour
 {
@@ -15,18 +14,21 @@ public class RelayConnectionManager : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport unityTransport;
 
-    [Header("UI")]
-    [SerializeField] private TMP_Text joinCodeText;
-    [SerializeField] private TMP_InputField joinCodeInput;
-
     private bool servicesReady;
 
-    async void Awake()
+    private async void Awake()
     {
-        await InitUnityServices();
+        try
+        {
+            await InitUnityServices();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Unity Services init failed in Awake: {e}");
+        }
     }
 
-    async Task InitUnityServices()
+    public async Task InitUnityServices()
     {
         if (servicesReady) return;
 
@@ -38,26 +40,52 @@ public class RelayConnectionManager : MonoBehaviour
         servicesReady = true;
     }
 
-    // =========================
-    // HOST
-    // =========================
+    public async Task<string> HostOnlineAsync(int maxRemoteClients = 1)
+    {
+        await InitUnityServices();
+
+        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxRemoteClients);
+        string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        var relayServerData = AllocationUtils.ToRelayServerData(allocation, "dtls");
+        unityTransport.SetRelayServerData(relayServerData);
+
+        networkManager.ServerManager.StartConnection();
+        networkManager.ClientManager.StartConnection();
+
+        return joinCode;
+    }
+
+    public async Task JoinOnlineAsync(string joinCode)
+    {
+        await InitUnityServices();
+
+        string cleaned = (joinCode ?? string.Empty).Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(cleaned))
+            throw new ArgumentException("Join code is empty.");
+
+        JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(cleaned);
+
+        var relayServerData = AllocationUtils.ToRelayServerData(allocation, "dtls");
+        unityTransport.SetRelayServerData(relayServerData);
+
+        networkManager.ClientManager.StartConnection();
+    }
+
+    public void StopAllConnections(bool stopServerToo)
+    {
+        if (networkManager == null) return;
+
+        networkManager.ClientManager.StopConnection();
+        if (stopServerToo)
+            networkManager.ServerManager.StopConnection(true);
+    }
+
     public async void HostOnline()
     {
         try
         {
-            await InitUnityServices();
-
-            // 1 client max (2 players total)
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-            joinCodeText.text = $"JOIN CODE: {joinCode}";
-
-            var relayServerData = AllocationUtils.ToRelayServerData(allocation, "dtls");
-            unityTransport.SetRelayServerData(relayServerData);
-
-            networkManager.ServerManager.StartConnection();
-            networkManager.ClientManager.StartConnection();
+            await HostOnlineAsync(1);
         }
         catch (Exception e)
         {
@@ -65,33 +93,16 @@ public class RelayConnectionManager : MonoBehaviour
         }
     }
 
-    // =========================
-    // CLIENT
-    // =========================
     public async void JoinOnline()
     {
-        try
-        {
-            await InitUnityServices();
+        Debug.LogWarning("JoinOnline() called without passing a join code. Use JoinOnlineAsync(joinCode) from ConnectionUI.");
+    }
 
-            string joinCode = joinCodeInput.text.Trim().ToUpper();
-            if (string.IsNullOrEmpty(joinCode))
-            {
-                Debug.LogError("Join code is empty.");
-                return;
-            }
-
-            JoinAllocation allocation =
-                await RelayService.Instance.JoinAllocationAsync(joinCode);
-
-            var relayServerData = AllocationUtils.ToRelayServerData(allocation, "dtls");
-            unityTransport.SetRelayServerData(relayServerData);
-
-            networkManager.ClientManager.StartConnection();
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Join failed: {e}");
-        }
+    private void Reset()
+    {
+        if (networkManager == null)
+            networkManager = FindFirstObjectByType<NetworkManager>();
+        if (unityTransport == null)
+            unityTransport = FindFirstObjectByType<UnityTransport>();
     }
 }

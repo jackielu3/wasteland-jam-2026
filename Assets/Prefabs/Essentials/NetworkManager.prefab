@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2952495430317182499}
   - component: {fileID: 40671649247580283}
   - component: {fileID: 7020920018763977425}
+  - component: {fileID: 4691208197068134184}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -82,3 +83,19 @@ MonoBehaviour:
     PacketJitterMS: 0
     PacketDropRate: 0
   m_MaximumClients: 4095
+--- !u!114 &4691208197068134184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7300622106754990064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0e797ad4a1eafd4eaad92130dfe7d80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawner
+  hostPlayerPrefab: {fileID: -7847365133963430286, guid: f0e780302bc25ec46a8a9deae256457a, type: 3}
+  clientPlayerPrefab: {fileID: -7847365133963430286, guid: baf9aefea808b9f4da30935b06272153, type: 3}
+  hostSpawn: {fileID: 0}
+  clientSpawn: {fileID: 0}
