@@ -108,6 +108,8 @@ GameObject:
   - component: {fileID: 4058884353109121752}
   - component: {fileID: 6060433610490836406}
   - component: {fileID: -1114882279640657466}
+  - component: {fileID: 8756225214798606880}
+  - component: {fileID: 7548558793396732406}
   m_Layer: 0
   m_Name: Player2
   m_TagString: Player
@@ -201,6 +203,7 @@ MonoBehaviour:
   - {fileID: 4058884353109121752}
   - {fileID: 6060433610490836406}
   - {fileID: -1114882279640657466}
+  - {fileID: 8756225214798606880}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -211,7 +214,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584314103277458939
+  _initializedTimestamp: -8584312325989144723
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -343,6 +346,7 @@ MonoBehaviour:
   _componentIndexCache: 2
   _addedNetworkObject: {fileID: -7847365133963430286}
   _networkObjectCache: {fileID: -7847365133963430286}
+  findTimeoutSeconds: 5
 --- !u!114 &6060433610490836406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,3 +381,33 @@ MonoBehaviour:
   maxBattery: 100
   rechargePerSecond: 25
   minBattery: -0.07
+--- !u!114 &8756225214798606880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7392026011000932278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8c5124e12f220d45a6efb5f3f73acc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleRpcHub
+  _componentIndexCache: 5
+  _addedNetworkObject: {fileID: -7847365133963430286}
+  _networkObjectCache: {fileID: -7847365133963430286}
+--- !u!114 &7548558793396732406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7392026011000932278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e428f42301206ee40a02969d94217c4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldRpcHub
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: -7847365133963430286}
+  _networkObjectCache: {fileID: 0}

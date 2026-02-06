@@ -169,6 +169,10 @@ public class ConnectionUI : MonoBehaviour
             ReplaceScenes = ReplaceOption.All
         };
 
+        PlayerSpawner lobbySpawner = FindFirstObjectByType<PlayerSpawner>();
+        if (lobbySpawner != null)
+            lobbySpawner.DespawnAllSpawnedPlayers();
+
         networkManager.SceneManager.LoadGlobalScenes(sld);
     }
 

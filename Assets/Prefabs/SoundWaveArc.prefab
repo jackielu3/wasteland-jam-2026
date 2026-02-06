@@ -67,7 +67,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584313176726953007
+  _initializedTimestamp: -8584312325989144723
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -326,10 +326,10 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 8322810418422467834}
   segments: 40
   lineWidth: 0.12
-  arcHalfAngleDegrees: 15
+  arcHalfAngleDegrees: 10.09
   hitboxThickness: 0.5
-  maxArcLengthWorld: 3.72
-  maxRadius: 16
+  maxArcLengthWorld: 2
+  maxRadius: 10
   startSpeed: 5
   acceleration: 25
   maxSpeed: 120

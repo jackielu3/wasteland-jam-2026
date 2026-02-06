@@ -1,160 +1,128 @@
-﻿using FishNet.Connection;
+﻿using System.Collections.Generic;
+using FishNet.Connection;
 using FishNet.Managing;
+using FishNet.Managing.Scened;
 using FishNet.Object;
-using System;
+using FishNet.Transporting;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-namespace FishNet.Component.Spawning
+public class PlayerSpawner : MonoBehaviour
 {
-    /// <summary>
-    /// Spawns a player object for clients when they connect.
-    /// </summary>
-    [AddComponentMenu("FishNet/Component/PlayerSpawner")]
-    public class PlayerSpawner : MonoBehaviour
+    [Header("FishNet")]
+    [SerializeField] private NetworkManager networkManager;
+
+    [Header("Prefabs")]
+    [SerializeField] private NetworkObject hostPlayerPrefab;
+    [SerializeField] private NetworkObject clientPlayerPrefab;
+
+    [Header("Spawn Points")]
+    [SerializeField] private Transform hostSpawn;
+    [SerializeField] private Transform clientSpawn;
+
+    // Tracks which connections already got a player.
+    private readonly HashSet<int> _spawnedClientIds = new();
+    // Tracks which connections we are waiting on (start scenes not loaded yet).
+    private readonly HashSet<int> _pendingClientIds = new();
+
+    private void Awake()
     {
-        #region Public.
-        /// <summary>
-        /// Called on the server when a player is spawned.
-        /// </summary>
-        public event Action<NetworkObject> OnSpawned;
-        #endregion
+        if (networkManager == null)
+            networkManager = FindFirstObjectByType<NetworkManager>();
+    }
 
-        #region Serialized.
-        /// <summary>
-        /// Prefab to spawn for the player.
-        /// </summary>
-        [Tooltip("Prefab to spawn for the player.")]
-        [SerializeField]
-        private NetworkObject _playerPrefab;
+    private void OnEnable()
+    {
+        if (networkManager == null) return;
 
-        /// <summary>
-        /// Sets the PlayerPrefab to use.
-        /// </summary>
-        /// <param name = "nob"></param>
-        public void SetPlayerPrefab(NetworkObject nob) => _playerPrefab = nob;
+        networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
+        networkManager.SceneManager.OnLoadEnd += OnLoadEnd;
+    }
 
-        /// <summary>
-        /// True to add player to the active scene when no global scenes are specified through the SceneManager.
-        /// </summary>
-        [Tooltip("True to add player to the active scene when no global scenes are specified through the SceneManager.")]
-        [SerializeField]
-        private bool _addToDefaultScene = true;
-        /// <summary>
-        /// Areas in which players may spawn.
-        /// </summary>
-        [Tooltip("Areas in which players may spawn.")]
-        public Transform[] Spawns = new Transform[0];
-        #endregion
+    private void OnDisable()
+    {
+        if (networkManager == null) return;
 
-        #region Private.
-        /// <summary>
-        /// First instance of the NetworkManager found. This will be either the NetworkManager on or above this object, or InstanceFinder.NetworkManager.
-        /// </summary>
-        private NetworkManager _networkManager;
-        /// <summary>
-        /// Next spawns to use.
-        /// </summary>
-        private int _nextSpawn;
-        #endregion
+        networkManager.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
+        networkManager.SceneManager.OnLoadEnd -= OnLoadEnd;
+    }
 
-        private void Awake()
+    private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
+    {
+        if (!networkManager.IsServerStarted || conn == null)
+            return;
+
+        if (args.ConnectionState == RemoteConnectionState.Started)
         {
-            InitializeOnce();
-        }
-
-        private void OnDestroy()
-        {
-            if (_networkManager != null)
-                _networkManager.SceneManager.OnClientLoadedStartScenes -= SceneManager_OnClientLoadedStartScenes;
-        }
-
-        /// <summary>
-        /// Initializes this script for use.
-        /// </summary>
-        private void InitializeOnce()
-        {
-            _networkManager = GetComponentInParent<NetworkManager>();
-            if (_networkManager == null)
-                _networkManager = InstanceFinder.NetworkManager;
-
-            if (_networkManager == null)
-            {
-                _networkManager.LogWarning($"PlayerSpawner on {gameObject.name} cannot work as NetworkManager wasn't found on this object or within parent objects.");
+            // Wait until THIS connection finishes loading FishNet start scenes.
+            if (_spawnedClientIds.Contains(conn.ClientId))
                 return;
-            }
 
-            _networkManager.SceneManager.OnClientLoadedStartScenes += SceneManager_OnClientLoadedStartScenes;
+            _pendingClientIds.Add(conn.ClientId);
+            conn.OnLoadedStartScenes += OnConnectionLoadedStartScenes;
         }
-
-        /// <summary>
-        /// Called when a client loads initial scenes after connecting.
-        /// </summary>
-        private void SceneManager_OnClientLoadedStartScenes(NetworkConnection conn, bool asServer)
+        else if (args.ConnectionState == RemoteConnectionState.Stopped)
         {
-            if (!asServer)
-                return;
-            if (_playerPrefab == null)
-            {
-                _networkManager.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
-                return;
-            }
-
-            Vector3 position;
-            Quaternion rotation;
-            SetSpawn(_playerPrefab.transform, out position, out rotation);
-
-            NetworkObject nob = _networkManager.GetPooledInstantiated(_playerPrefab, position, rotation, true);
-            _networkManager.ServerManager.Spawn(nob, conn);
-
-            // If there are no global scenes 
-            if (_addToDefaultScene)
-                _networkManager.SceneManager.AddOwnerToDefaultScene(nob);
-
-            OnSpawned?.Invoke(nob);
+            _pendingClientIds.Remove(conn.ClientId);
+            _spawnedClientIds.Remove(conn.ClientId);
+            conn.OnLoadedStartScenes -= OnConnectionLoadedStartScenes;
         }
+    }
 
-        /// <summary>
-        /// Sets a spawn position and rotation.
-        /// </summary>
-        /// <param name = "pos"></param>
-        /// <param name = "rot"></param>
-        private void SetSpawn(Transform prefab, out Vector3 pos, out Quaternion rot)
+    private void OnConnectionLoadedStartScenes(NetworkConnection conn, bool asServer)
+    {
+        if (!asServer || conn == null)
+            return;
+
+        // Unhook immediately to avoid multiple calls.
+        conn.OnLoadedStartScenes -= OnConnectionLoadedStartScenes;
+
+        if (!_pendingClientIds.Contains(conn.ClientId))
+            return;
+
+        _pendingClientIds.Remove(conn.ClientId);
+        TrySpawnForConnection(conn);
+    }
+
+    // This fires when FishNet finishes loading scenes (server side).
+    // Handy for host/local cases where start scenes are already loaded.
+    private void OnLoadEnd(SceneLoadEndEventArgs args)
+    {
+        if (!networkManager.IsServerStarted)
+            return;
+
+        // Try spawn anyone connected that isn't spawned yet.
+        foreach (var conn in networkManager.ServerManager.Clients.Values)
+            TrySpawnForConnection(conn);
+    }
+
+    private void TrySpawnForConnection(NetworkConnection conn)
+    {
+        if (conn == null || !networkManager.IsServerStarted)
+            return;
+
+        if (_spawnedClientIds.Contains(conn.ClientId))
+            return;
+
+        // Choose prefab/spawn: host is usually ClientId == 0.
+        bool isHostLike = (conn.ClientId == 0);
+        NetworkObject prefab = isHostLike ? hostPlayerPrefab : clientPlayerPrefab;
+        Transform spawn = isHostLike ? hostSpawn : clientSpawn;
+
+        if (prefab == null)
         {
-            // No spawns specified.
-            if (Spawns.Length == 0)
-            {
-                SetSpawnUsingPrefab(prefab, out pos, out rot);
-                return;
-            }
-
-            Transform result = Spawns[_nextSpawn];
-            if (result == null)
-            {
-                SetSpawnUsingPrefab(prefab, out pos, out rot);
-            }
-            else
-            {
-                pos = result.position;
-                rot = result.rotation;
-            }
-
-            // Increase next spawn and reset if needed.
-            _nextSpawn++;
-            if (_nextSpawn >= Spawns.Length)
-                _nextSpawn = 0;
+            Debug.LogError("PlayerSpawner: Missing player prefab reference.");
+            return;
         }
-
-        /// <summary>
-        /// Sets spawn using values from prefab.
-        /// </summary>
-        /// <param name = "prefab"></param>
-        /// <param name = "pos"></param>
-        /// <param name = "rot"></param>
-        private void SetSpawnUsingPrefab(Transform prefab, out Vector3 pos, out Quaternion rot)
+        if (spawn == null)
         {
-            pos = prefab.position;
-            rot = prefab.rotation;
+            Debug.LogError("PlayerSpawner: Missing spawn point reference.");
+            return;
         }
+
+        NetworkObject player = Instantiate(prefab, spawn.position, spawn.rotation);
+        networkManager.ServerManager.Spawn(player, conn);
+
+        _spawnedClientIds.Add(conn.ClientId);
+        Debug.Log($"Spawned player for ClientId={conn.ClientId} at {spawn.name}");
     }
 }

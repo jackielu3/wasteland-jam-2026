@@ -1,12 +1,11 @@
-using System.Collections.Generic;
 using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
-using FishNet.Managing.Client;
 using FishNet.Managing.Server;
-using FishNet.Managing.Scened;
 using FishNet.Object;
 using FishNet.Transporting;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerSpawner : MonoBehaviour
@@ -19,93 +18,62 @@ public class PlayerSpawner : MonoBehaviour
     [SerializeField] private Transform hostSpawn;
     [SerializeField] private Transform clientSpawn;
 
+    private NetworkManager _nm;
     private ServerManager _server;
-    private ClientManager _client;
-    private FishNet.Managing.Scened.SceneManager _sceneManager;
 
-    private readonly HashSet<int> _spawnedClientIds = new HashSet<int>();
+    private readonly Dictionary<int, NetworkObject> _spawnedByClientId = new();
+
     private int _hostClientId = -1;
-    private int _fallbackHostClientId = -1;
-    
+
     private void Awake()
     {
-        _server = InstanceFinder.ServerManager;
-        _client = InstanceFinder.ClientManager;
-        _sceneManager = InstanceFinder.SceneManager;
+        _nm = InstanceFinder.NetworkManager;
+        if (_nm != null)
+            _server = _nm.ServerManager;
     }
 
     private void OnEnable()
     {
-        if (_server != null)
-        {
-            _server.OnRemoteConnectionState += OnRemoteConnectionState;
-            _server.OnServerConnectionState += OnServerConnectionState;
-        }
+        if (_nm == null || _server == null)
+            return;
 
-        if (_sceneManager != null)
-        {
-            // Fires after FishNet completes scene loading.
-            _sceneManager.OnLoadEnd += OnFishNetLoadEnd;
-        }
+        _server.OnRemoteConnectionState += OnRemoteConnectionState;
+
+        if (InstanceFinder.IsServerStarted && _server.Started)
+            StartCoroutine(SpawnForAllConnectedNextFrame());
     }
 
     private void OnDisable()
     {
         if (_server != null)
-        {
             _server.OnRemoteConnectionState -= OnRemoteConnectionState;
-            _server.OnServerConnectionState -= OnServerConnectionState;
-        }
-
-        if (_sceneManager != null)
-        {
-            _sceneManager.OnLoadEnd -= OnFishNetLoadEnd;
-        }
-    }
-
-    private void OnServerConnectionState(ServerConnectionStateArgs args)
-    {
-        if (args.ConnectionState == LocalConnectionState.Stopped)
-        {
-            _spawnedClientIds.Clear();
-            _fallbackHostClientId = -1;
-        }
     }
 
     private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
     {
-        if (!InstanceFinder.IsServerStarted) return;
+        if (!InstanceFinder.IsServerStarted)
+            return;
 
         if (args.ConnectionState == RemoteConnectionState.Started)
         {
-            // If a new client joins while gameplay scene is active, spawn them too.
+            _hostClientId = -1;
             TrySpawnForConnection(conn);
         }
         else if (args.ConnectionState == RemoteConnectionState.Stopped)
         {
-            _spawnedClientIds.Remove(conn.ClientId);
+            _hostClientId = -1;
+
+            if (conn != null)
+                _spawnedByClientId.Remove(conn.ClientId);
         }
     }
 
-    private void OnFishNetLoadEnd(SceneLoadEndEventArgs args)
+    private IEnumerator SpawnForAllConnectedNextFrame()
     {
-        // Only server spawns.
-        if (!InstanceFinder.IsServerStarted) return;
+        yield return null;
 
-        // This is the key: when gameplay scene finishes loading, spawn for everyone already connected.
-        TrySpawnForAllExistingConnections();
-    }
-
-    private void TrySpawnForAllExistingConnections()
-    {
-        if (!InstanceFinder.IsServerStarted)
-            return;
-
-        if (_server == null)
-        {
-            Debug.LogError("PlayerSpawner: ServerManager is null.");
-            return;
-        }
+        if (!InstanceFinder.IsServerStarted || !_server.Started)
+            yield break;
 
         _hostClientId = GetLowestActiveClientId();
 
@@ -123,42 +91,43 @@ public class PlayerSpawner : MonoBehaviour
         if (conn == null || !conn.IsActive)
             return;
 
-        if (_spawnedClientIds.Contains(conn.ClientId))
+        if (_spawnedByClientId.ContainsKey(conn.ClientId))
             return;
 
-        bool isHostPlayer = IsHostConnection(conn);
-
-        NetworkObject prefab = isHostPlayer ? hostPlayerPrefab : clientPlayerPrefab;
-        Transform spawn = isHostPlayer ? hostSpawn : clientSpawn;
-
-        if (prefab == null)
+        if (conn.Objects != null && conn.Objects.Count > 0)
         {
-            Debug.LogError($"PlayerSpawner: Missing prefab for {(isHostPlayer ? "HOST" : "CLIENT")}.");
             return;
         }
 
-        Vector3 pos = spawn ? spawn.position : Vector3.zero;
-        Quaternion rot = spawn ? spawn.rotation : Quaternion.identity;
+        bool isHost = IsHostConnection(conn);
+        NetworkObject prefab = isHost ? hostPlayerPrefab : clientPlayerPrefab;
+        Transform spawn = isHost ? hostSpawn : clientSpawn;
 
-        NetworkObject player = Instantiate(prefab, pos, rot);
+        if (prefab == null)
+        {
+            Debug.LogError("PlayerSpawner: Prefab is null.");
+            return;
+        }
 
-        // If spawning fails, FishNet will usually log why (often prefab registration).
-        _server.Spawn(player, conn);
+        Vector3 pos = spawn != null ? spawn.position : Vector3.zero;
+        Quaternion rot = spawn != null ? spawn.rotation : Quaternion.identity;
 
-        _spawnedClientIds.Add(conn.ClientId);
+        NetworkObject nob = Instantiate(prefab, pos, rot);
 
-        Debug.Log($"PlayerSpawner: Spawned {(isHostPlayer ? "HOST" : "CLIENT")} player for ClientId={conn.ClientId}");
+        _server.Spawn(nob, conn);
+
+        _spawnedByClientId[conn.ClientId] = nob;
+
+        Debug.Log($"PlayerSpawner[{gameObject.scene.name}]: Spawned {(isHost ? "HOST" : "CLIENT")} player for ClientId={conn.ClientId}");
     }
 
     private bool IsHostConnection(NetworkConnection conn)
     {
-        // Host is whichever active connection has the lowest ClientId.
         if (_hostClientId == -1)
             _hostClientId = GetLowestActiveClientId();
 
         return conn.ClientId == _hostClientId;
     }
-
 
     private int GetLowestActiveClientId()
     {
@@ -176,4 +145,19 @@ public class PlayerSpawner : MonoBehaviour
         return lowest == int.MaxValue ? -1 : lowest;
     }
 
+    public void DespawnAllSpawnedPlayers()
+    {
+        if (!InstanceFinder.IsServerStarted || _server == null || !_server.Started)
+            return;
+
+        foreach (var kvp in _spawnedByClientId)
+        {
+            NetworkObject nob = kvp.Value;
+            if (nob != null && nob.IsSpawned)
+                _server.Despawn(nob);
+        }
+
+        _spawnedByClientId.Clear();
+        Debug.Log($"PlayerSpawner[{gameObject.scene.name}]: Despawned all spawned players.");
+    }
 }

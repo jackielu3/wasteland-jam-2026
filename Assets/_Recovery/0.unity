@@ -374,8 +374,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FishNetConnectUI
   networkManager: {fileID: 1566481069}
-  tugboat: {fileID: 1566481067}
-  addressInput: {fileID: 1599056533}
+  relayConnectionManager: {fileID: 0}
+  mainMenuCanvas: {fileID: 0}
+  lobbyCanvas: {fileID: 0}
+  hostKeyText: {fileID: 0}
+  joinCodeInput: {fileID: 0}
+  hostButtonRoot: {fileID: 0}
+  clientButtonRoot: {fileID: 0}
+  startButtonRoot: {fileID: 0}
+  backButtonRoot: {fileID: 0}
+  gameplaySceneBuildIndex: -1
 --- !u!1 &880998881
 GameObject:
   m_ObjectHideFlags: 0

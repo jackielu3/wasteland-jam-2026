@@ -45,6 +45,7 @@
   <Project Path="Unity.Splines.Editor.csproj" />
   <Project Path="Unity.PerformanceTesting.csproj" />
   <Project Path="Unity.2D.Tilemap.Extras.Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Services.Multiplayer.Editor.Matchmaker.Authoring.csproj" />
   <Project Path="PsdPlugin.csproj" />
   <Project Path="Unity.2D.IK.Editor.csproj" />
@@ -83,7 +84,6 @@
   <Project Path="Unity.Services.Multiplayer.Editor.csproj" />
   <Project Path="Unity.VisualScripting.Shared.Editor.csproj" />
   <Project Path="Unity.2D.Aseprite.Common.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Services.Core.Device.csproj" />
   <Project Path="Unity.Services.Core.Analytics.csproj" />
   <Project Path="Unity.CollabProxy.Editor.csproj" />
