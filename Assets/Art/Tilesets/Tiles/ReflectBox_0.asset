@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: ReflectBox_0
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: -2400474428663149975, guid: 2cdf45dfbc0bd1c40b9a4ea9ff8c5ca9, type: 3}
+  m_Sprite: {fileID: -2400474428663149975, guid: b28f061248e9d36498fd93e9abf61f17, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

@@ -67,7 +67,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584312325989144723
+  _initializedTimestamp: -8584311595132711919
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -326,7 +326,7 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 8322810418422467834}
   segments: 40
   lineWidth: 0.12
-  arcHalfAngleDegrees: 10.09
+  arcHalfAngleDegrees: 10
   hitboxThickness: 0.5
   maxArcLengthWorld: 2
   maxRadius: 10
@@ -340,5 +340,12 @@ MonoBehaviour:
   wallSkin: 0.02
   damageMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 32768
   damagePerSecond: 10
+  arcButtonMask:
+    serializedVersion: 2
+    m_Bits: 32768
+  deflectorMask:
+    serializedVersion: 2
+    m_Bits: 65536
+  deflectOffset: 0.05

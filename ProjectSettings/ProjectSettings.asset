@@ -777,7 +777,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Standalone: FISHNET;FISHNET_V4
+    Standalone: FISHNET;FISHNET_V4;DISABLE_QOL_ATTRIBUTES
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

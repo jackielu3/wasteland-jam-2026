@@ -42,6 +42,14 @@ public class SoundWaveArcNet : NetworkBehaviour
     [SerializeField] private LayerMask damageMask;
     [SerializeField] private float damagePerSecond = 10f;
 
+    [Header("Puzzle Buttons (Arc Press)")]
+    [SerializeField] private LayerMask arcButtonMask;
+
+    [Header("Deflection")]
+    [SerializeField] private LayerMask deflectorMask;
+    [SerializeField] private float deflectOffset = 0.05f;
+
+
     private LineRenderer _lr;
     private PolygonCollider2D _poly;
 
@@ -312,6 +320,41 @@ public class SoundWaveArcNet : NetworkBehaviour
         if (!IsServerStarted)
             return;
 
+        // Deflectors
+        if (((1 << other.gameObject.layer) & deflectorMask) != 0)
+        {
+            ArcDeflector deflector = other.GetComponentInParent<ArcDeflector>();
+            if (deflector != null)
+            {
+                int arcId = GetInstanceID();
+
+                if (deflector.TryDeflect(arcId, _dir, out Vector2 reflected))
+                {
+                    Vector2 hitPoint = deflector.GetDeflectPoint(other, transform.position);
+                    Vector2 newOrigin = hitPoint + reflected * deflectOffset;
+
+                    SoundWaveManager.Instance.ServerSpawnArcFrom(
+                        Owner,
+                        newOrigin,
+                        reflected
+                    );
+
+                    Despawn();
+                    return;
+                }
+            }
+        }
+
+        // Buttons
+        if (arcButtonMask.value != 0 && ((1 << other.gameObject.layer) & arcButtonMask) != 0)
+        {
+            ArcButtonPlate plate = other.GetComponentInParent<ArcButtonPlate>();
+            if (plate != null && CoopPuzzleManager.Instance != null)
+            {
+                CoopPuzzleManager.Instance.ServerPulsePlate(plate.PlateId, plate.PressSeconds);
+            }
+        }
+
         if (Time.time < _serverNextDamageTick)
             return;
 
@@ -319,8 +362,5 @@ public class SoundWaveArcNet : NetworkBehaviour
 
         if (((1 << other.gameObject.layer) & damageMask) == 0)
             return;
-
-        // Apply damage here (damagePerSecond)
-        // This is a placeholder hook.
     }
 }

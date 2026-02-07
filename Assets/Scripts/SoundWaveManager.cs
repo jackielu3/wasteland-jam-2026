@@ -17,13 +17,13 @@ public class SoundWaveManager : MonoBehaviour
     [Header("Arc")]
     [SerializeField] private float arcFireInterval = 0.08f;
 
-    private PlayerBattery _battery;
-
     private class ShooterState
     {
         public Transform Source;
         public Vector2 AimDir;
         public Coroutine Loop;
+
+        public PlayerBattery Battery;
     }
 
     private readonly Dictionary<NetworkConnection, ShooterState> _shooters = new();
@@ -38,15 +38,12 @@ public class SoundWaveManager : MonoBehaviour
         Instance = this;
     }
 
-    /// <summary>
-    /// Server: start firing arcs for this player connection, originating from 'source'.
-    /// </summary>
     public void ServerStartForPlayer(NetworkConnection owner, Transform source, Vector2 aimDir)
     {
         if (!InstanceFinder.IsServerStarted)
             return;
 
-        if (owner == null)
+        if (owner == null || source == null)
             return;
 
         if (!_shooters.TryGetValue(owner, out ShooterState state) || state == null)
@@ -58,18 +55,16 @@ public class SoundWaveManager : MonoBehaviour
         state.Source = source;
         state.AimDir = aimDir;
 
-        // Restart loop if already running
+        state.Battery = source.GetComponent<PlayerBattery>();
+        if (state.Battery == null)
+            state.Battery = source.GetComponentInParent<PlayerBattery>();
+
         if (state.Loop != null)
             StopCoroutine(state.Loop);
 
         state.Loop = StartCoroutine(ServerFireLoop(owner));
-
-        _battery = state.Source.GetComponent<PlayerBattery>();
     }
 
-    /// <summary>
-    /// Server: stop firing arcs for this player.
-    /// </summary>
     public void ServerStopForPlayer(NetworkConnection owner)
     {
         if (!InstanceFinder.IsServerStarted)
@@ -87,9 +82,6 @@ public class SoundWaveManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Server: update the current aim direction while firing.
-    /// </summary>
     public void ServerUpdateAimForPlayer(NetworkConnection owner, Vector2 aimDir)
     {
         if (!InstanceFinder.IsServerStarted)
@@ -104,8 +96,22 @@ public class SoundWaveManager : MonoBehaviour
         }
     }
 
+    public void ServerSpawnArcFrom(FishNet.Connection.NetworkConnection owner, Vector2 origin, Vector2 dir)
+    {
+        if (!FishNet.InstanceFinder.IsServerStarted) return;
+        if (arcPrefab == null) return;
+
+        SoundWaveArcNet arc = Instantiate(arcPrefab, Vector3.zero, Quaternion.identity);
+        FishNet.InstanceFinder.ServerManager.Spawn(arc.gameObject, owner);
+
+        uint serverTick = FishNet.InstanceFinder.TimeManager.Tick;
+        arc.Init(origin, dir, serverTick);
+    }
+
     private IEnumerator ServerFireLoop(NetworkConnection owner)
     {
+        WaitForSeconds wait = new WaitForSeconds(arcFireInterval);
+
         while (true)
         {
             if (owner == null)
@@ -127,14 +133,27 @@ public class SoundWaveManager : MonoBehaviour
                     ? state.AimDir.normalized
                     : Vector2.right;
 
-                if (_battery != null)
+                if (state.Battery == null)
                 {
-                    if (!_battery.TryConsume(batteryCostPerArc))
+                    state.Battery = state.Source.GetComponent<PlayerBattery>();
+                    if (state.Battery == null)
+                        state.Battery = state.Source.GetComponentInParent<PlayerBattery>();
+                }
+
+                if (state.Battery != null)
+                {
+                    if (!state.Battery.TryConsume(batteryCostPerArc))
                     {
                         ServerStopForPlayer(owner);
                         yield break;
                     }
-                }   
+                }
+                else
+                {
+                    Debug.LogWarning($"[SoundWaveManager] No PlayerBattery found for owner {owner.ClientId}. Stopping firing.");
+                    ServerStopForPlayer(owner);
+                    yield break;
+                }
 
                 SoundWaveArcNet arc = Instantiate(arcPrefab, Vector3.zero, Quaternion.identity);
                 InstanceFinder.ServerManager.Spawn(arc.gameObject, owner);
@@ -143,7 +162,7 @@ public class SoundWaveManager : MonoBehaviour
                 arc.Init(origin, dir, serverTick);
             }
 
-            yield return new WaitForSeconds(arcFireInterval);
+            yield return wait;
         }
     }
 }

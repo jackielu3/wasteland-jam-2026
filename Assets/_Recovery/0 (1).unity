@@ -169,9 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90eaa9ed2df110048beb45568a63feda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PressurePlate
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 521025901}
-  _networkObjectCache: {fileID: 0}
+  plateId: 0
 --- !u!19719996 &127752813
 TilemapCollider2D:
   m_ObjectHideFlags: 0
@@ -458,7 +456,7 @@ MonoBehaviour:
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 0
-  SceneId: 3471031295
+  SceneId: 3732850559
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 0}
@@ -2966,7 +2964,7 @@ MonoBehaviour:
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 0
-  SceneId: 4018112379
+  SceneId: 4018056063
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 0}
@@ -8355,9 +8353,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90eaa9ed2df110048beb45568a63feda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PressurePlate
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 521025901}
-  _networkObjectCache: {fileID: 0}
+  plateId: 0
 --- !u!50 &868809317
 Rigidbody2D:
   serializedVersion: 5
@@ -8478,7 +8474,7 @@ MonoBehaviour:
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 0
-  SceneId: 3749695483
+  SceneId: 4294964219
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 0}
@@ -9575,7 +9571,7 @@ MonoBehaviour:
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 0
-  SceneId: 3488786303
+  SceneId: 3212298235
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
     Rotation: {x: 0, y: 0, z: 0, w: 0}

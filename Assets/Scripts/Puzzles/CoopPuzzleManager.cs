@@ -23,7 +23,39 @@ public class CoopPuzzleManager : MonoBehaviour
 
     private readonly Dictionary<int, int> _plateCounts = new();
 
+    private readonly Dictionary<int, float> _arcPressedUntil = new();
+    private float _nextArcExpiryCheckTime = 0f;
+
     private void Awake() => Instance = this;
+
+    private void Update()
+    {
+        if (!IsServerRunning())
+            return;
+
+        if (Time.time < _nextArcExpiryCheckTime)
+            return;
+
+        if (_arcPressedUntil.Count == 0)
+            return;
+
+        bool anyExpired = false;
+        float nextExpiry = float.PositiveInfinity;
+
+        foreach (var kvp in _arcPressedUntil)
+        {
+            float until = kvp.Value;
+            if (until <= Time.time)
+                anyExpired = true;
+            else if (until < nextExpiry)
+                nextExpiry = until;
+        }
+
+        if (anyExpired)
+            RecomputeDoors();
+
+        _nextArcExpiryCheckTime = float.IsInfinity(nextExpiry) ? (Time.time + 999f) : nextExpiry;
+    }
 
     public void ServerSetPlatePressed(int plateId, bool pressed)
     {
@@ -36,36 +68,67 @@ public class CoopPuzzleManager : MonoBehaviour
         RecomputeDoors();
     }
 
+    public void ServerPulsePlate(int plateId, float pressSeconds)
+    {
+        if (!IsServerRunning()) return;
+
+        float now = Time.time;
+        float newUntil = now + Mathf.Max(0.01f, pressSeconds);
+
+        if (_arcPressedUntil.TryGetValue(plateId, out float currentUntil))
+        {
+            if (newUntil > currentUntil)
+                _arcPressedUntil[plateId] = newUntil;
+        }
+        else
+        {
+            _arcPressedUntil[plateId] = newUntil;
+        }
+
+        _nextArcExpiryCheckTime = Mathf.Min(_nextArcExpiryCheckTime, _arcPressedUntil[plateId]);
+
+        RecomputeDoors();
+    }
+
     private bool IsServerRunning()
     {
         return InstanceFinder.NetworkManager != null &&
                InstanceFinder.NetworkManager.IsServerStarted;
     }
 
+    private bool IsPlateActive(int plateId)
+    {
+        if (_plateCounts.TryGetValue(plateId, out var c) && c > 0)
+            return true;
+
+        if (_arcPressedUntil.TryGetValue(plateId, out var until) && until > Time.time)
+            return true;
+
+        return false;
+    }
+
     private void RecomputeDoors()
     {
         foreach (var d in doors)
         {
-            bool allHeld = true;
+            bool allActive = true;
             foreach (var id in d.requiredPlateIds)
             {
-                if (!_plateCounts.TryGetValue(id, out var c) || c <= 0) { allHeld = false; break; }
+                if (!IsPlateActive(id)) { allActive = false; break; }
             }
 
-            bool shouldOpen = d.stayOpenOnceOpened ? (d.everOpened || allHeld) : allHeld;
-            if (allHeld) d.everOpened = true;
+            bool shouldOpen = d.stayOpenOnceOpened ? (d.everOpened || allActive) : allActive;
+            if (allActive) d.everOpened = true;
 
             if (d.isOpen == shouldOpen) continue;
             d.isOpen = shouldOpen;
 
-            // Server tells everyone via Player-spawned hub.
             PuzzleRpcHub.SendDoorActiveToAll(d.doorId, active: !d.isOpen);
         }
     }
 
     public void ApplyDoorLocal(int doorId, bool active)
     {
-        // called on every client when RPC arrives
         foreach (var d in doors)
         {
             if (d.doorId != doorId) continue;

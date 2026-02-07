@@ -1119,10 +1119,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 211a9f6ec51ddc14f908f5acc0cd0423, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Spawning.PlayerSpawner
-  _playerPrefab: {fileID: -7847365133963430286, guid: f0e780302bc25ec46a8a9deae256457a, type: 3}
-  _addToDefaultScene: 1
-  Spawns:
-  - {fileID: 1404022912}
+  networkManager: {fileID: 0}
+  hostPlayerPrefab: {fileID: 0}
+  clientPlayerPrefab: {fileID: 0}
+  hostSpawn: {fileID: 0}
+  clientSpawn: {fileID: 0}
 --- !u!1 &1599056531
 GameObject:
   m_ObjectHideFlags: 0

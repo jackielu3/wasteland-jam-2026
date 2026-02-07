@@ -110,6 +110,7 @@ GameObject:
   - component: {fileID: -1114882279640657466}
   - component: {fileID: -4196605774461676654}
   - component: {fileID: 4262985289755226158}
+  - component: {fileID: -4663499284387977461}
   m_Layer: 0
   m_Name: Player1
   m_TagString: Player
@@ -204,6 +205,7 @@ MonoBehaviour:
   - {fileID: 6060433610490836406}
   - {fileID: -1114882279640657466}
   - {fileID: -4196605774461676654}
+  - {fileID: 4262985289755226158}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -214,7 +216,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584312325989144723
+  _initializedTimestamp: -8584311764242779624
   NetworkObserver: {fileID: 0}
   _enablePrediction: 0
   _predictionType: 0
@@ -363,6 +365,8 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: -7847365133963430286}
   _networkObjectCache: {fileID: -7847365133963430286}
   aimSendInterval: 0.05
+  ghostSpawnInterval: 0.08
+  predictedGhostPrefab: {fileID: 0}
 --- !u!114 &-1114882279640657466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,6 +412,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e428f42301206ee40a02969d94217c4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldRpcHub
-  _componentIndexCache: 255
+  _componentIndexCache: 6
   _addedNetworkObject: {fileID: -7847365133963430286}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: -7847365133963430286}
+--- !u!114 &-4663499284387977461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7392026011000932278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b56b6aa6cf345d34baca88dafe4d01fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlatePresser
