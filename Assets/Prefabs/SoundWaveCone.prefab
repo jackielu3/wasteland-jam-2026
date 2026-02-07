@@ -125,7 +125,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecd986b80d676c8459e3193b8c679aed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundWaveConeNet
-  _componentIndexCache: 1
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 0}
   _networkObjectCache: {fileID: 0}
   maxRange: 8

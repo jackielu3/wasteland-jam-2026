@@ -22,7 +22,6 @@ public class SoundWaveManager : MonoBehaviour
         public Transform Source;
         public Vector2 AimDir;
         public Coroutine Loop;
-
         public PlayerBattery Battery;
     }
 
@@ -91,21 +90,7 @@ public class SoundWaveManager : MonoBehaviour
             return;
 
         if (_shooters.TryGetValue(owner, out ShooterState state) && state != null)
-        {
             state.AimDir = aimDir;
-        }
-    }
-
-    public void ServerSpawnArcFrom(FishNet.Connection.NetworkConnection owner, Vector2 origin, Vector2 dir)
-    {
-        if (!FishNet.InstanceFinder.IsServerStarted) return;
-        if (arcPrefab == null) return;
-
-        SoundWaveArcNet arc = Instantiate(arcPrefab, Vector3.zero, Quaternion.identity);
-        FishNet.InstanceFinder.ServerManager.Spawn(arc.gameObject, owner);
-
-        uint serverTick = FishNet.InstanceFinder.TimeManager.Tick;
-        arc.Init(origin, dir, serverTick);
     }
 
     private IEnumerator ServerFireLoop(NetworkConnection owner)
@@ -129,15 +114,11 @@ public class SoundWaveManager : MonoBehaviour
             if (arcPrefab != null)
             {
                 Vector2 origin = state.Source.position;
-                Vector2 dir = state.AimDir.sqrMagnitude > 0.0001f
-                    ? state.AimDir.normalized
-                    : Vector2.right;
+                Vector2 dir = state.AimDir.sqrMagnitude > 0.0001f ? state.AimDir.normalized : Vector2.right;
 
                 if (state.Battery == null)
                 {
-                    state.Battery = state.Source.GetComponent<PlayerBattery>();
-                    if (state.Battery == null)
-                        state.Battery = state.Source.GetComponentInParent<PlayerBattery>();
+                    state.Battery = state.Source.GetComponent<PlayerBattery>() ?? state.Source.GetComponentInParent<PlayerBattery>();
                 }
 
                 if (state.Battery != null)
@@ -148,21 +129,26 @@ public class SoundWaveManager : MonoBehaviour
                         yield break;
                     }
                 }
-                else
-                {
-                    Debug.LogWarning($"[SoundWaveManager] No PlayerBattery found for owner {owner.ClientId}. Stopping firing.");
-                    ServerStopForPlayer(owner);
-                    yield break;
-                }
 
-                SoundWaveArcNet arc = Instantiate(arcPrefab, Vector3.zero, Quaternion.identity);
-                InstanceFinder.ServerManager.Spawn(arc.gameObject, owner);
-
-                uint serverTick = InstanceFinder.TimeManager.Tick;
-                arc.Init(origin, dir, serverTick);
+                ServerSpawnArcFrom(owner, origin, dir);
             }
 
             yield return wait;
         }
+    }
+
+    public void ServerSpawnArcFrom(NetworkConnection owner, Vector2 origin, Vector2 dir)
+    {
+        if (!InstanceFinder.IsServerStarted)
+            return;
+
+        if (arcPrefab == null)
+            return;
+
+        SoundWaveArcNet arc = Instantiate(arcPrefab, Vector3.zero, Quaternion.identity);
+        InstanceFinder.ServerManager.Spawn(arc.gameObject, owner);
+
+        uint serverTick = InstanceFinder.TimeManager.Tick;
+        arc.Init(origin, dir, serverTick);
     }
 }

@@ -4,11 +4,11 @@
   <PrefabGenerator>
     <Enabled>true</Enabled>
     <LogToConsole>true</LogToConsole>
-    <FullRebuild>false</FullRebuild>
+    <FullRebuild>true</FullRebuild>
     <SpawnableOnly>true</SpawnableOnly>
     <SaveChanges>true</SaveChanges>
     <DefaultPrefabObjectsPath>Assets\DefaultPrefabObjects.asset</DefaultPrefabObjectsPath>
-    <SearchScope>1</SearchScope>
+    <SearchScope>0</SearchScope>
     <ExcludedFolders />
     <IncludedFolders />
   </PrefabGenerator>

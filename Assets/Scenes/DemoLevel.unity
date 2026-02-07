@@ -3561,6 +3561,37 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &874759713
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 874759714}
+  m_Layer: 0
+  m_Name: Deflector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &874759714
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874759713}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.77, y: 2.42, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1785590458}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &973235788
 GameObject:
   m_ObjectHideFlags: 0
@@ -11489,6 +11520,7 @@ Transform:
   - {fileID: 1324517275}
   - {fileID: 507941563}
   - {fileID: 973235789}
+  - {fileID: 874759714}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1785590459
@@ -11515,6 +11547,11 @@ MonoBehaviour:
     - {fileID: 1324517275}
     - {fileID: 507941563}
     - {fileID: 973235789}
+    requireTwoPlayers: 0
+    spawnWithNoOwner: 0
+  - prefab: {fileID: 921926462575706660, guid: 938934a966643d04ea4a0f2ef671eaf5, type: 3}
+    spawnPoints:
+    - {fileID: 874759714}
     requireTwoPlayers: 0
     spawnWithNoOwner: 0
 --- !u!1 &1895835878

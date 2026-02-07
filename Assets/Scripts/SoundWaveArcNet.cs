@@ -47,7 +47,7 @@ public class SoundWaveArcNet : NetworkBehaviour
 
     [Header("Deflection")]
     [SerializeField] private LayerMask deflectorMask;
-    [SerializeField] private float deflectOffset = 0.05f;
+    [SerializeField] private float deflectSpawnEpsilon = 0.06f;
 
 
     private LineRenderer _lr;
@@ -320,8 +320,7 @@ public class SoundWaveArcNet : NetworkBehaviour
         if (!IsServerStarted)
             return;
 
-        // Deflectors
-        if (((1 << other.gameObject.layer) & deflectorMask) != 0)
+        if (deflectorMask.value != 0 && ((1 << other.gameObject.layer) & deflectorMask) != 0)
         {
             ArcDeflector deflector = other.GetComponentInParent<ArcDeflector>();
             if (deflector != null)
@@ -331,13 +330,10 @@ public class SoundWaveArcNet : NetworkBehaviour
                 if (deflector.TryDeflect(arcId, _dir, out Vector2 reflected))
                 {
                     Vector2 hitPoint = deflector.GetDeflectPoint(other, transform.position);
-                    Vector2 newOrigin = hitPoint + reflected * deflectOffset;
+                    Vector2 newOrigin = hitPoint + reflected * deflectSpawnEpsilon;
 
-                    SoundWaveManager.Instance.ServerSpawnArcFrom(
-                        Owner,
-                        newOrigin,
-                        reflected
-                    );
+                    if (SoundWaveManager.Instance != null)
+                        SoundWaveManager.Instance.ServerSpawnArcFrom(Owner, newOrigin, reflected);
 
                     Despawn();
                     return;
@@ -345,7 +341,6 @@ public class SoundWaveArcNet : NetworkBehaviour
             }
         }
 
-        // Buttons
         if (arcButtonMask.value != 0 && ((1 << other.gameObject.layer) & arcButtonMask) != 0)
         {
             ArcButtonPlate plate = other.GetComponentInParent<ArcButtonPlate>();
